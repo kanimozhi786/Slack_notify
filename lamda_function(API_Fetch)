@@ -1,0 +1,41 @@
+import urllib.request
+import json
+import boto3
+
+def lambda_handler(event, context):
+    # Example API URL
+    api_url = "http://api.open-notify.org/iss-now.json"
+    
+
+    # Make the API request
+    response_data = urllib.request.urlopen(api_url)
+    data = response_data.read()
+            # Decode JSON data
+    decoded_data = json.loads(data)
+
+    latitude = decoded_data['iss_position']['latitude']
+    longitude = decoded_data['iss_position']['longitude']
+    timestamp = decoded_data['timestamp']
+    message_status = decoded_data['message']
+    print(message_status)
+    t=dyno_db_insert(latitude,longitude,timestamp,message_status)
+    print(t)
+    
+    
+def dyno_db_insert(latitude,longitude,timestamp,message):
+    dynamodb = boto3.resource('dynamodb')
+    table = dynamodb.Table('slack_api_data') 
+    #inserting values into table 
+    response = table.put_item( 
+       Item={ 
+            'latitude': latitude,
+            'longitude': longitude,
+            'timestamp': timestamp,
+            'message_status': message
+            
+        } 
+    ) 
+    return response,'success'
+
+
+
